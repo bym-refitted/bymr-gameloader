@@ -1,6 +1,8 @@
-![4](https://github.com/user-attachments/assets/31ae27b8-0f6a-47c6-aa49-c017b6720b26)
+<p align="center">
+ <img width="100%" src="./images/4.jpg">
+</p>
 
-<br/><br/>
+<br/>
 
 ![ActionScript](https://img.shields.io/badge/ActionScript-%23DD0031.svg?style=for-the-badge)
 
