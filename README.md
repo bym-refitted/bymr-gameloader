@@ -22,4 +22,4 @@ We are serving this gameloader file via our game launcher's stable version. It c
 ## URL
 https://cdn.bymrefitted.com/swfs/gameloader.swf?language=english&token=1234
 ```
-The gameloader simulates a 3-second load, and proceeds to load the main game SWF within it's container, passimg these Flash vars to the main SWF.
+The gameloader simulates a 3-second load, and proceeds to load the main game SWF within it's container, passing these Flash vars to the main SWF.
