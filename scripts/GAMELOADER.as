@@ -9,9 +9,8 @@ package
    import flash.utils.Timer;
 
    /*
-    * Game loader class responsible for loading and initializing the main game SWF.
+    * A rewritten gameloader class responsible for loading and initializing the main game SWF.
     * Displays a loading progress bar while preparing the game.
-    *
     */
    public class GAMELOADER extends Sprite
    {
