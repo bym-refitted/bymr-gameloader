@@ -30,7 +30,7 @@ package
          this.urls = {};
          var serverUrl:String = "https://server.bymrefitted.com/";
          var cdnUrl:String = "https://cdn.bymrefitted.com/";
-         var apiVersionSuffix:String = "v1.2.4-beta/";
+         var apiVersionSuffix:String = "v1.2.5-beta/";
 
          this.urls._baseURL = serverUrl + "base/";
          this.urls._apiURL = serverUrl + "api/" + apiVersionSuffix;
