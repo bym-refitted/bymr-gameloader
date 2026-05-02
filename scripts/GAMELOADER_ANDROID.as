@@ -8,38 +8,39 @@ package
    import flash.events.IOErrorEvent;
    import flash.events.SecurityErrorEvent;
    import flash.events.TimerEvent;
-   import flash.net.URLLoader;
+   import flash.net.URLLoaderDataFormat;
    import flash.net.URLRequest;
+   import flash.net.URLLoader;
+   import flash.system.LoaderContext;
    import flash.text.TextField;
    import flash.text.TextFieldAutoSize;
    import flash.utils.Timer;
 
    public class GAMELOADER extends Sprite
    {
-
       public var mcLoading:MovieClip;
-
       public var _game:Loader;
 
       private const API_URL:String = "https://server.bymrefitted.com/";
-
       private const CDN_URL:String = "https://cdn.bymrefitted.com/";
 
       private var urls:Object;
 
       private var step:int = 0;
-
       private var steps:int;
 
       private var manifestData:Object;
-
       private var timerDone:Boolean = false;
+      private var _pendingURL:String;
 
       public function GAMELOADER()
       {
          super();
+
          this.urls = {};
+
          var apiVersionSuffix:String = "v0.0.0/";
+
          this.urls._baseURL = API_URL + "base/";
          this.urls._apiURL = API_URL + "api/" + apiVersionSuffix;
          this.urls.infbaseurl = this.urls._apiURL + "bm/base/";
@@ -55,18 +56,25 @@ package
          this.urls._tpid = API_URL;
          this.urls._currencyURL = API_URL;
          this.urls._countryCode = API_URL + "us";
+
          this.mcLoading.tProgress.htmlText = "0%";
          this.mcLoading.mcLoadingScreen.mcBar.width = 0;
+
          var duration:int = 1000;
          var interval:int = 10;
          steps = duration / interval;
+
          var timer:Timer = new Timer(interval, steps);
          timer.addEventListener(TimerEvent.TIMER, onTimerProgress);
          timer.addEventListener(TimerEvent.TIMER_COMPLETE, onTimerComplete);
          timer.start();
+
+         _pendingURL = CDN_URL + "versionManifest.json";
          var manifestLoader:URLLoader = new URLLoader();
          manifestLoader.addEventListener(Event.COMPLETE, onManifestLoaded);
-         manifestLoader.load(new URLRequest(CDN_URL + "versionManifest.json?v=" + Math.random()));
+         manifestLoader.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+         manifestLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
+         manifestLoader.load(new URLRequest(_pendingURL));
       }
 
       private function onTimerProgress(e:TimerEvent):void
@@ -86,7 +94,16 @@ package
 
       private function onManifestLoaded(e:Event):void
       {
-         manifestData = JSON.parse(e.target.data);
+         try
+         {
+            manifestData = JSON.parse(e.target.data);
+         }
+         catch (err:Error)
+         {
+            showError(err.message, _pendingURL);
+            return;
+         }
+
          if (timerDone)
             proceedWithManifest();
       }
@@ -134,28 +151,57 @@ package
          return "Error #" + id + ": " + desc;
       }
 
+      // Android:
+      // var version:String = manifestData.currentAndroidVersion;
       private function proceedWithManifest():void
       {
          var version:String = manifestData.currentGameVersion;
-         var versionSuffix:String = "v" + version + "-beta"
-         ;
+         var versionSuffix:String = "v" + version + "-beta";
+
          this.urls._apiURL = API_URL + "api/" + versionSuffix + "/";
          this.urls.infbaseurl = this.urls._apiURL + "bm/base/";
 
          loadGameSWF(versionSuffix);
       }
 
+      // Android:
+      // _pendingURL = CDN_URL + "swfs/bymr-android-" + versionSuffix + ".swf";
+      // 
+      // loadBytes() is used instead of load() so the game SWF is promoted into the application
+      // sandbox. load() from a remote URL puts content in the remote sandbox, which blocks stage
+      // access and throws Error #2070 in an AIR APK.
       private function loadGameSWF(versionSuffix:String):void
       {
+         _pendingURL = CDN_URL + "swfs/bymr-stable-" + versionSuffix + ".swf";
+
+         var swfLoader:URLLoader = new URLLoader();
+         swfLoader.dataFormat = URLLoaderDataFormat.BINARY;
+         swfLoader.addEventListener(Event.COMPLETE, onSWFBytesLoaded);
+         swfLoader.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+         swfLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
+         swfLoader.load(new URLRequest(_pendingURL));
+      }
+
+      private function onSWFBytesLoaded(e:Event):void
+      {
+         // allowCodeImport is required — without it AIR silently accepts the bytes
+         // but never instantiates the SWF, leaving the loader hung at 100% with no events firing.
+         var context:LoaderContext = new LoaderContext();
+         context.allowCodeImport = true;
+
          this._game = new Loader();
-
-         var url:String = CDN_URL + "swfs/bymr-stable-" + versionSuffix + ".swf";
-         var request:URLRequest = new URLRequest(url);
-
          this._game.contentLoaderInfo.addEventListener(Event.COMPLETE, this.onComplete);
          this._game.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
          this._game.contentLoaderInfo.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
-         this._game.load(request);
+
+         try
+         {
+            this._game.loadBytes(URLLoader(e.target).data, context);
+         }
+         catch (err:Error)
+         {
+            showError(err.message, "loadBytes() — #" + err.errorID);
+         }
       }
 
       public function onComplete(e:Event):void
