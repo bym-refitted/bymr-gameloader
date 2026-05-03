@@ -151,11 +151,9 @@ package
          return "Error #" + id + ": " + desc;
       }
 
-      // Android:
-      // var version:String = manifestData.currentAndroidVersion;
       private function proceedWithManifest():void
       {
-         var version:String = manifestData.currentGameVersion;
+         var version:String = manifestData.currentAndroidVersion;
          var versionSuffix:String = "v" + version + "-beta";
 
          this.urls._apiURL = API_URL + "api/" + versionSuffix + "/";
@@ -164,15 +162,9 @@ package
          loadGameSWF(versionSuffix);
       }
 
-      // Android:
-      // _pendingURL = CDN_URL + "swfs/bymr-android-" + versionSuffix + ".swf";
-      // 
-      // loadBytes() is used instead of load() so the game SWF is promoted into the application
-      // sandbox. load() from a remote URL puts content in the remote sandbox, which blocks stage
-      // access and throws Error #2070 in an AIR APK.
       private function loadGameSWF(versionSuffix:String):void
       {
-         _pendingURL = CDN_URL + "swfs/bymr-stable-" + versionSuffix + ".swf";
+         _pendingURL = CDN_URL + "swfs/bymr-android-" + versionSuffix + ".swf";
 
          var swfLoader:URLLoader = new URLLoader();
          swfLoader.dataFormat = URLLoaderDataFormat.BINARY;
